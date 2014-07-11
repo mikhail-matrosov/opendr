@@ -112,7 +112,20 @@ class ProjectPoints(Ch):
             ch.minimize(cam - uvd, x0=[cam.v], method='dogleg', options={'disp': 0})
             result = cam.v.r
         else:
-            xy_undistorted_camspace = cv2.undistortPoints(np.asarray(uvd[:,:2].reshape((1,-1,2)).copy()), np.asarray(cam.camera_mtx), cam.k.r)
+            try:
+                xy_undistorted_camspace = cv2.undistortPoints(np.asarray(uvd[:,:2].reshape((1,-1,2)).copy()), np.asarray(cam.camera_mtx), cam.k.r)
+            except AttributeError:
+                import cv
+                num_row, num_col = uvd[:,:2].reshape((1,-1,2)).shape[0:2]
+                xy_undistorted_camspace_mat = cv.CreateMat(num_row, num_col, cv.CV_64FC2)
+                dist = cv.CreateMat(1, 5, cv.CV_32FC1)
+                for idx in range(cam.k.r.size):
+                    dist[0, idx] = cam.k.r[idx]
+                cv.UndistortPoints(cv.fromarray(np.asarray(uvd[:,:2].reshape((1,-1,2))).copy()),
+                                   xy_undistorted_camspace_mat,
+                                   cv.fromarray(np.asarray(cam.camera_mtx)),
+                                   dist)
+                xy_undistorted_camspace = np.asarray(xy_undistorted_camspace_mat)
             xyz_camera_space = np.hstack((xy_undistorted_camspace.squeeze(), col(uvd[:,2])))
             xyz_camera_space[:,:2] *= col(xyz_camera_space[:,2]) # scale x,y by z
             if camera_space:
@@ -129,6 +142,11 @@ class ProjectPoints(Ch):
         xyz = self.unproject_points(uvd, camera_space=camera_space)
         return xyz.reshape((depth_image.shape[0], depth_image.shape[1], -1))
 
+    def project_depth_point(self, xyz):
+        cam = ProjectPoints3D(**{k: getattr(self, k)  for k in self.dterms if hasattr(self, k)})
+        uvd = cam.camera_mtx.dot(xyz)
+        uv = uvd[:2] / uvd[-1]
+        return uv
     
     @depends_on('f','c')
     def camera_mtx(self):

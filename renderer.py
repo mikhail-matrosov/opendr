@@ -57,7 +57,8 @@ class BaseRenderer(Ch):
     @depends_on('f', 'frustum', 'camera', 'overdraw')
     def visibility_image(self):
         self._call_on_changed()
-        return draw_visibility_image(self.glb, self.v.r, self.f, self.boundarybool_image if self.overdraw else None)
+        return draw_visibility_image(self.glb, self.v.r, self.f,
+                                     self.boundarybool_image if self.overdraw else None)
 
     @depends_on(terms+dterms)
     def boundarybool_image(self):
@@ -82,11 +83,8 @@ class BaseRenderer(Ch):
         return self.primitives_per_edge[0]
 
 
-
-
-
 class DepthRenderer(BaseRenderer):
-    terms = 'f', 'frustum', 'background_image','overdraw'
+    terms = 'f', 'frustum', 'background_image','overdraw', 'x0', 'x1', 'y0', 'y1'
     dterms = 'camera', 'v'        
     
 
@@ -197,6 +195,39 @@ class DepthRenderer(BaseRenderer):
 
         return result
 
+    @depends_on('f', 'frustum', 'camera', 'overdraw', 'x0', 'x1', 'y0', 'y1')
+    def visibility_image(self):
+        self._call_on_changed()
+        if hasattr(self, 'x0') and self.x0 != None:
+            return draw_visibility_image(self.glb, self.v.r, self.f,
+                                         self.boundarybool_image if self.overdraw else None,
+                                         self.x0, self.x1, self.y0, self.y1)
+        else:
+            return draw_visibility_image(self.glb, self.v.r, self.f,
+                                         self.boundarybool_image if self.overdraw else None)
+
+    @depends_on(terms+dterms)
+    def boundaryid_image(self):
+        self._call_on_changed()
+        if hasattr(self, 'x0') and self.x0 != None:
+            return draw_boundaryid_image(self.glb, self.v.r, self.f, self.vpe,
+                                     self.fpe, self.camera,
+                                     self.x0, self.x1, self.y0, self.y1)
+        else:
+            return draw_boundaryid_image(self.glb, self.v.r, self.f, self.vpe,
+                                     self.fpe, self.camera)
+
+    @depends_on('f', 'frustum', 'camera', 'overdraw', 'x0', 'x1', 'y0', 'y1')
+    def barycentric_image(self):
+        self._call_on_changed()
+        if hasattr(self, 'x0') and self.x0 != None:
+            return draw_barycentric_image(self.glf, self.v.r, self.f,
+                                      self.boundarybool_image if self.overdraw else None,
+                                      self.x0, self.x1, self.y0, self.y1)
+        else:
+            return draw_barycentric_image(self.glf, self.v.r, self.f,
+                                      self.boundarybool_image if self.overdraw else None)
+
     def getDepthMesh(self, depth_image=None):
         self._call_on_changed() # make everything is up-to-date
         v = self.glb.getDepthCloud(depth_image)
@@ -266,8 +297,6 @@ class ColoredRenderer(BaseRenderer):
     terms = 'f', 'frustum', 'background_image', 'overdraw'
     dterms = 'vc', 'camera', 'bgcolor'        
     
-    
-
     def compute_r(self):
         tmp = self.camera.r
         return self.color_image.reshape((self.frustum['height'], self.frustum['width'], -1))
@@ -326,8 +355,6 @@ class ColoredRenderer(BaseRenderer):
     def flow_to(self, v_next, cam_next=None):
         return common.flow_to(self, v_next, cam_next)
 
-
-
     def filter_for_triangles(self, which_triangles):
         cim = self.color_image
         vim = self.visibility_image+1
@@ -367,7 +394,6 @@ class ColoredRenderer(BaseRenderer):
 
         return result
 
-
     @depends_on(dterms+terms)
     def color_image(self):
         gl = self.glf
@@ -382,10 +408,6 @@ class ColoredRenderer(BaseRenderer):
         gl.PolygonMode(GL_FRONT_AND_BACK, GL_FILL)
         boundarybool_image = np.atleast_3d(self.boundarybool_image)
         return overdraw*boundarybool_image + no_overdraw*(1-boundarybool_image)
-
-
-
-
 
     @depends_on('f', 'frustum', 'camera')
     def boundary_images(self):
@@ -651,7 +673,7 @@ def compute_vpe_boundary_idxs(v, f, camera, fpe):
 
 
 
-def draw_boundaryid_image(gl, v, f, vpe, fpe, camera):
+def draw_boundaryid_image(gl, v, f, vpe, fpe, camera, x0=None, x1=None, y0=None, y1=None):
 
 
     if False:
@@ -669,6 +691,14 @@ def draw_boundaryid_image(gl, v, f, vpe, fpe, camera):
         if len(lines_e)==0:
             return np.ones((gl.height, gl.width)).astype(np.int32) * 4294967295
         visibility = draw_edge_visibility(gl, lines_v, lines_e, f, hidden_wireframe=True)
+
+        # Crop
+        if x0 != None and isinstance(x0, int):
+            visibility[:y0] = -1
+            visibility[y1:] = -1
+            visibility[y0:y1, :x0] = -1
+            visibility[y0:y1, x1:] = -1
+        
         shape = visibility.shape
         visibility = visibility.ravel()
         visible = np.nonzero(visibility.ravel() != 4294967295)[0]

@@ -305,12 +305,20 @@ def dr_wrt_vc(visible, visibility, f, barycentric, frustum, v_size):
     return result
 
 
-def draw_visibility_image(gl, v, f, boundarybool_image=None):
+def draw_visibility_image(gl, v, f, boundarybool_image=None, x0=None, x1=None, y0=None, y1=None):
     v = np.asarray(v)
     gl.Disable(GL_TEXTURE_2D)
     gl.DisableClientState(GL_TEXTURE_COORD_ARRAY)
 
     result = draw_visibility_image_internal(gl, v, f)
+
+    # Crop
+    if x0 != None and isinstance(x0, int):
+        result[:y0] = -1
+        result[y1:] = -1
+        result[y0:y1, :x0] = -1
+        result[y0:y1, x1:] = -1
+
     if boundarybool_image is None:
         return result
 
@@ -321,6 +329,13 @@ def draw_visibility_image(gl, v, f, boundarybool_image=None):
         return result
     gl.PolygonMode(GL_FRONT_AND_BACK, GL_LINE)
     result2 = draw_visibility_image_internal(gl, v, f[faces_to_draw])
+
+    if x0 != None and isinstance(x0, int):
+        result2[:y0] = -1
+        result2[y1:] = -1
+        result2[y0:y1, :x0] = -1
+        result2[y0:y1, x1:] = -1
+
     gl.PolygonMode(GL_FRONT_AND_BACK, GL_FILL)
     bbi = boundarybool_image
 
@@ -426,14 +441,29 @@ def draw_texcoord_image(glf, v, f, vt, ft, boundarybool_image=None):
     return result
 
 
-def draw_barycentric_image(gl, v, f, boundarybool_image=None):
+def draw_barycentric_image(gl, v, f, boundarybool_image=None, x0=None, x1=None,
+                           y0=None, y1=None):
     v = np.asarray(v)
     without_overdraw = draw_barycentric_image_internal(gl, v, f)
+    # Crop
+    if x0 != None and isinstance(x0, int):
+        without_overdraw[:y0] = -1
+        without_overdraw[y1:] = -1
+        without_overdraw[y0:y1, :x0] = -1
+        without_overdraw[y0:y1, x1:] = -1
+
     if boundarybool_image is None:
         return without_overdraw
 
     gl.PolygonMode(GL_FRONT_AND_BACK, GL_LINE)
     overdraw = draw_barycentric_image_internal(gl, v, f)
+    # Crop
+    if x0 != None and isinstance(x0, int):
+        overdraw[:y0] = -1
+        overdraw[y1:] = -1
+        overdraw[y0:y1, :x0] = -1
+        overdraw[y0:y1, x1:] = -1
+
     gl.PolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     bbi = np.atleast_3d(boundarybool_image)

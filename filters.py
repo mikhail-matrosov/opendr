@@ -70,6 +70,7 @@ def gaussian_pyramid(input_objective, imshape=None, normalization='SSE', n_level
         cur_obj = GaussPyrDownOne(px=cur_obj, im_shape = cur_imshape)
         cur_imshape = cur_obj.output_shape
         output_objectives.append(norm2(cur_obj) if label is None else norm2(cur_obj) >> '%s%d' % (label,ik))
+
         
     if not as_list:
         andit = lambda a : reduce(lambda x, y : ch.concatenate((x.ravel(), y.ravel())), a)
@@ -139,8 +140,10 @@ def halfsampler_for(shape):
 
 def filter_for_nopadding(shape, kernel):
     assert(len(shape)==3)
-    new_shape = (shape - np.array([kernel.shape[0] - 1, kernel.shape[1] - 1, 0])).astype(np.uint32)
-
+    #new_shape = (shape - np.array([kernel.shape[0] - 1, kernel.shape[1] - 1, 0])).astype(np.uint32)
+    new_shape = (shape - np.array([kernel.shape[0] - 1, kernel.shape[1] - 1, 0]))
+    new_shape[new_shape<0] = 0.0
+    new_shape = new_shape.astype(np.uint32)
 
     IS = []
     JS = []

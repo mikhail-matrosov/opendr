@@ -15,7 +15,6 @@ def mstack(vs, fs):
     return v, f
 
 
-
 def wget(url, dest_fname=None):
     import urllib2
     from os.path import split, join
@@ -25,7 +24,12 @@ def wget(url, dest_fname=None):
         dest_fname = join(curdir, split(url)[1])
 
     try:
-        contents = urllib2.urlopen(url).read()
+        source = urllib2.urlopen(url)
+        with open(dest_fname, 'w') as f:
+            while True:
+                contents = source.read(8000)
+                if contents == "":
+                    break
+                f.write(contents)
     except:
         raise Exception('Unable to get url: %s' % (url,))
-    open(dest_fname, 'w').write(contents)
