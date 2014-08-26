@@ -6,10 +6,17 @@ See LICENCE.txt for licensing and contact information.
 
 from setuptools import setup
 from distutils.extension import Extension
-from Cython.Build import cythonize
 import numpy
 import platform
 import os
+
+try:
+    from Cython.Build import cythonize
+    have_cython = True
+except:
+    cythonize = lambda x : x
+    have_cython = False
+
 
 # setuptools DWIM monkey-patch madness
 # http://mail.python.org/pipermail/distutils-sig/2007-September/thread.html#8204
@@ -53,7 +60,7 @@ def autogen_opengl_sources():
 def setup_opendr(ext_modules):
     ext_modules=cythonize(ext_modules)
     setup(name='opendr',
-            version='0.57',
+            version='0.63',
             packages = ['opendr', 'opendr.contexts', 'opendr.test_dr'],
             package_dir = {'opendr': '.'},
             author = 'Matthew Loper',
@@ -61,7 +68,7 @@ def setup_opendr(ext_modules):
             url = 'http://github.com/mattloper/opendr',
             ext_package='opendr',
             package_data={'opendr': ['test_dr/nasa*']},
-            install_requires=['cython', 'chumpy >= 0.53', 'matplotlib'],
+            install_requires=['Cython', 'chumpy >= 0.53', 'matplotlib'],
             description='opendr',
             ext_modules=ext_modules,
             license='MIT',
@@ -96,10 +103,12 @@ def setup_opendr(ext_modules):
 def mesa_ext():
     libraries = ['OSMesa', 'GL', 'GLU']
     extra_args = []
-    if platform.system()=='Darwin':
+    if platform.system()=='Darwin': # deprecated, probably don't need osmesa libs on mac
         libraries.append('talloc')
         extra_args.append('-Qunused-arguments')
-    return Extension("contexts.ctx_mesa", ['contexts/ctx_mesa.pyx'],
+    else:
+        extra_args.append('-lstdc++')
+    return Extension("contexts.ctx_mesa", ['contexts/ctx_mesa.pyx'] if have_cython else ['contexts/ctx_mesa.c'],
                         language="c",
                         library_dirs=['contexts/OSMesa/lib'],
                         depends=['contexts/_constants.py'],
@@ -110,7 +119,7 @@ def mesa_ext():
                         extra_link_args=extra_args)
 
 def mac_ext():
-    return Extension("contexts.ctx_mac", ['contexts/ctx_mac.pyx', 'contexts/ctx_mac_internal.c'],
+    return Extension("contexts.ctx_mac", ['contexts/ctx_mac.pyx', 'contexts/ctx_mac_internal.c'] if have_cython else ['contexts/ctx_mac.c', 'contexts/ctx_mac_internal.c'],
         language="c",
         depends=['contexts/_constants.py', 'contexts/ctx_mac_internal.h'],
         include_dirs=['.', numpy.get_include()],
@@ -128,7 +137,7 @@ def main():
 
     # Get context extensions ready & build
     if platform.system() == 'Darwin':
-        setup_opendr([mesa_ext(), mac_ext()])
+        setup_opendr([mac_ext()])
     else:
         setup_opendr([mesa_ext()])
 

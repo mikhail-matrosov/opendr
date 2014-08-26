@@ -11,7 +11,7 @@ __all__ = ['ProjectPoints3D', 'ProjectPoints', 'RigidTransform']
 
 import chumpy as ch
 from chumpy import depends_on, Ch
-import cv2
+from cvwrap import cv2
 import numpy as np
 import scipy.sparse as sp
 from chumpy.utils import row, col
@@ -107,31 +107,18 @@ class ProjectPoints(Ch):
     def unproject_points(self, uvd, camera_space=False):
         cam = ProjectPoints3D(**{k: getattr(self, k)  for k in self.dterms if hasattr(self, k)})
 
-        if False: # slow way, probably not so good
-            cam.v = np.ones_like(uvd)
-            ch.minimize(cam - uvd, x0=[cam.v], method='dogleg', options={'disp': 0})
-            result = cam.v.r
-        else:
-            try:
-                xy_undistorted_camspace = cv2.undistortPoints(np.asarray(uvd[:,:2].reshape((1,-1,2)).copy()), np.asarray(cam.camera_mtx), cam.k.r)
-            except AttributeError:
-                import cv
-                num_row, num_col = uvd[:,:2].reshape((1,-1,2)).shape[0:2]
-                xy_undistorted_camspace_mat = cv.CreateMat(num_row, num_col, cv.CV_64FC2)
-                dist = cv.CreateMat(1, 5, cv.CV_32FC1)
-                for idx in range(cam.k.r.size):
-                    dist[0, idx] = cam.k.r[idx]
-                cv.UndistortPoints(cv.fromarray(np.asarray(uvd[:,:2].reshape((1,-1,2))).copy()),
-                                   xy_undistorted_camspace_mat,
-                                   cv.fromarray(np.asarray(cam.camera_mtx)),
-                                   dist)
-                xy_undistorted_camspace = np.asarray(xy_undistorted_camspace_mat)
+        try:
+            xy_undistorted_camspace = cv2.undistortPoints(np.asarray(uvd[:,:2].reshape((1,-1,2)).copy()), np.asarray(cam.camera_mtx), cam.k.r)
             xyz_camera_space = np.hstack((xy_undistorted_camspace.squeeze(), col(uvd[:,2])))
             xyz_camera_space[:,:2] *= col(xyz_camera_space[:,2]) # scale x,y by z
             if camera_space:
                 return xyz_camera_space
             other_answer = xyz_camera_space - row(cam.view_mtx[:,3]) # translate
             result = other_answer.dot(cam.view_mtx[:,:3]) # rotate
+        except: # slow way, probably not so good. But doesn't require cv2.undistortPoints.
+            cam.v = np.ones_like(uvd)
+            ch.minimize(cam - uvd, x0=[cam.v], method='dogleg', options={'disp': 0})
+            result = cam.v.r
         return result
 
     def unproject_depth_image(self, depth_image, camera_space=False):

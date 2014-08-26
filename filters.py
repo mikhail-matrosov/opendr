@@ -8,7 +8,7 @@ See LICENCE.txt for licensing and contact information.
 
 __all__ = ['gaussian_pyramid', 'laplacian_pyramid']
 
-import cv2
+from cvwrap import cv2
 import chumpy as ch
 import numpy as np
 from copy import deepcopy
@@ -70,7 +70,6 @@ def gaussian_pyramid(input_objective, imshape=None, normalization='SSE', n_level
         cur_obj = GaussPyrDownOne(px=cur_obj, im_shape = cur_imshape)
         cur_imshape = cur_obj.output_shape
         output_objectives.append(norm2(cur_obj) if label is None else norm2(cur_obj) >> '%s%d' % (label,ik))
-
         
     if not as_list:
         andit = lambda a : reduce(lambda x, y : ch.concatenate((x.ravel(), y.ravel())), a)
@@ -80,7 +79,7 @@ def gaussian_pyramid(input_objective, imshape=None, normalization='SSE', n_level
 
 def GaussianKernel2D(ksize, sigma):
     if ksize % 2 != 1:
-        raise Exception('ksize should be an even number')
+        raise Exception('ksize should be an odd number')
     if sigma <= 0:
         raise Exception('sigma should be positive')
     oneway = np.tile(cv2.getGaussianKernel(ksize,sigma), (1, ksize))

@@ -246,7 +246,7 @@ except:
 # Create V, A, U, f: geometry, brightness, camera, renderer                     
 V = ch.array(m.v)                                                               
 A = SphericalHarmonics(vn=VertNormals(v=V, f=m.f),                              
-                       components=[3.,1.,0.,0.,0.,0.,0.,0.,0.],                 
+                       components=[3.,2.,0.,0.,0.,0.,0.,0.,0.],
                        light_color=ch.ones(3))                                  
 U = ProjectPoints(v=V, f=[300,300.], c=[w/2.,h/2.], k=ch.zeros(5),              
                   t=ch.zeros(3), rt=ch.zeros(3))                                
@@ -258,16 +258,15 @@ f = TexturedRenderer(vc=A, camera=U, f=m.f, bgcolor=[0.,0.,0.],
 translation, rotation = ch.array([0,0,4]), ch.zeros(3)                          
 f.v = translation + V.dot(Rodrigues(rotation))                                  
                                                                                 
-try:
-    observed = load_image('earth_observed.jpg')
-except:
-    observed = f.r 
-    translation[:] = translation.r + np.random.rand(3)*.25
-    rotation[:] = rotation.r + np.random.rand(3)*.25
+observed = f.r 
+translation[:] = translation.r + np.random.rand(3)*.2
+rotation[:] = rotation.r + np.random.rand(3)*.2
+A.components[1:] = 0
 
 # Create the energy
 difference = f - observed
-E = gaussian_pyramid(difference, n_levels=6, normalization='SSE')               
+E = gaussian_pyramid(difference, n_levels=6, as_list=True)[-3:]
+E = ch.concatenate([e.ravel() for e in E])
 
 plt.ion()
 global cb
@@ -276,6 +275,7 @@ global plt
 
 def cb(_):
     plt.imshow(np.abs(difference.r))
+    plt.title('Absolute difference')
     plt.draw()
          
          
@@ -283,8 +283,14 @@ def cb(_):
 light_parms = A.components     
 print 'OPTIMIZING TRANSLATION'                                                 
 ch.minimize({'energy': E}, x0=[translation], callback=lambda _ : cb(difference)) 
-print 'OPTIMIZING TRANSLATION, ROTATION, AND LIGHT PARMS'                                                 
+
+print 'OPTIMIZING TRANSLATION, ROTATION, AND LIGHT PARMS (coarse)'                                                 
 ch.minimize({'energy': E}, x0=[translation, rotation, light_parms], callback=cb) 
+
+print 'OPTIMIZING TRANSLATION, ROTATION, AND LIGHT PARMS (refined)'                                                 
+E = gaussian_pyramid(difference, n_levels=6, normalization='size')
+ch.minimize({'energy': E}, x0=[translation, rotation, light_parms], callback=cb) 
+
 """
 
 
