@@ -6,7 +6,7 @@ Author(s): Matthew Loper
 See LICENCE.txt for licensing and contact information.
 """
 
-__all__ = ['gaussian_pyramid', 'laplacian_pyramid']
+__all__ = ['gaussian_pyramid', 'laplacian_pyramid', 'GaussPyrDownOne']
 
 from cvwrap import cv2
 import chumpy as ch
@@ -24,15 +24,15 @@ def laplacian_pyramid(input_objective, imshape, normalization, n_levels, as_list
     elif normalization is 'SSE':
         norm2 = lambda x : x / np.sqrt(np.sum(x.r**2.))
     elif normalization is 'size':
-        norm2 = lambda x : x / np.sqrt(x.r.size)
+        norm2 = lambda x : x / x.r.size
     else:
-        raise Exception('Normalization must be None, SSE, or size.')
+        norm2 = normalization
 
     
     output_objs = []
     for level in range(n_levels):
     
-        blur_mtx = filter_for(imshape[0], imshape[1], imshape[2], kernel = GaussianKernel2D(3, 1))
+        blur_mtx = filter_for(imshape[0], imshape[1], imshape[2] if len(imshape)>2 else 1, kernel = GaussianKernel2D(3, 1))
         blurred = MatVecMult(blur_mtx, input_objective).reshape(imshape)
         output_objs.append(norm2(input_objective - blurred))
 
@@ -56,9 +56,9 @@ def gaussian_pyramid(input_objective, imshape=None, normalization='SSE', n_level
     elif normalization is 'SSE':
         norm2 = lambda x : x / np.sqrt(np.sum(x.r**2.))
     elif normalization is 'size':
-        norm2 = lambda x : x / np.sqrt(x.r.size)
+        norm2 = lambda x : x / x.r.size
     else:
-        raise Exception('Normalization must be None, SSE, or size.')
+        norm2 = normalization
 
     cur_imshape = deepcopy(imshape)
     cur_obj = input_objective
@@ -124,7 +124,7 @@ class GaussPyrDownOne(Ch):
 def halfsampler_for(shape):
     h = shape[0]
     w = shape[1]
-    d = shape[2]
+    d = shape[2] if len(shape) > 2 else 1
     
     JS = np.arange(h*w*d).reshape((h,w,d))
     JS = JS[::2,::2,:]
@@ -133,16 +133,17 @@ def halfsampler_for(shape):
     IS = np.arange(len(JS))
     data = np.ones(len(JS))
     
-    shape = (int(np.ceil(h/2.)), int(np.ceil(w/2.)), int(d))
+    if len(shape) > 2:
+        shape = (int(np.ceil(h/2.)), int(np.ceil(w/2.)), int(d))
+    else:
+        shape = (int(np.ceil(h/2.)), int(np.ceil(w/2.)))
     return sp.csc_matrix((data, (IS, JS)), shape=(len(IS), h*w*d)), shape
     
 
 def filter_for_nopadding(shape, kernel):
-    assert(len(shape)==3)
-    #new_shape = (shape - np.array([kernel.shape[0] - 1, kernel.shape[1] - 1, 0])).astype(np.uint32)
-    new_shape = (shape - np.array([kernel.shape[0] - 1, kernel.shape[1] - 1, 0]))
-    new_shape[new_shape<0] = 0.0
-    new_shape = new_shape.astype(np.uint32)
+    new_shape = np.array(shape).copy()
+    new_shape[0] -= kernel.shape[0] - 1
+    new_shape[1] -= kernel.shape[1] - 1
 
     IS = []
     JS = []
@@ -169,16 +170,16 @@ def filter_for_nopadding(shape, kernel):
     IS = np.concatenate(IS)
     JS = np.concatenate(JS)
     data = np.concatenate(data)
-    
-    d = int(shape[2])
-    if d > 1:
-        IS = [IS*d+k for k in range(d)]
-        JS = [JS*d+k for k in range(d)]
-        data = [data for k in range(d)]
-        IS = np.concatenate(IS)
-        JS = np.concatenate(JS)
-        data = np.concatenate(data)
-        
+
+    if len(shape) > 2:
+        d = int(shape[2])
+        if d > 1:
+            IS = [IS*d+k for k in range(d)]
+            JS = [JS*d+k for k in range(d)]
+            data = [data for k in range(d)]
+            IS = np.concatenate(IS)
+            JS = np.concatenate(JS)
+            data = np.concatenate(data)
             
     return sp.csc_matrix((data, (IS, JS))), new_shape
 

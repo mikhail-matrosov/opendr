@@ -81,6 +81,21 @@ class TestRenderer(unittest.TestCase):
         lightings = {1: lighting_1channel, 3: lighting_3channel}
         return mesh, lightings, camera, frustum, renderers
         
+    def test_pyramids(self):
+        """ Test that pyramid construction doesn't crash. No quality testing here. """
+        mesh, lightings, camera, frustum, renderers = self.load_basics()
+        from opendr.filters import gaussian_pyramid, laplacian_pyramid, GaussPyrDownOne
+
+        camera.v = mesh.v
+        for rn in renderers:
+            lightings[rn.num_channels].v = camera.v
+            rn.vc = lightings[rn.num_channels]
+            rn_pyr = gaussian_pyramid(rn, normalization=None, n_levels=2)
+            rn_lap = laplacian_pyramid(rn, normalization=None, imshape=rn.shape, as_list=False, n_levels=2)
+            rn_gpr = GaussPyrDownOne(im_shape=rn.shape, want_downsampling=True, px=rn)
+            for r in [rn_pyr, rn_lap, rn_gpr]:
+                _ = r.r
+                #_ = r.dr_wrt(rn.v)
         
     def test_distortion(self):
         mesh, lightings, camera, frustum, renderers = self.load_basics()
@@ -115,7 +130,7 @@ class TestRenderer(unittest.TestCase):
             [0, 0, 1]
         ])
 
-        import cv2
+        from cvwrap import cv2
         im_undistorted = cv2.undistort(im_distorted, cmtx, cr.camera.k.r)
 
         d1 = (im_original - im_distorted).ravel()
