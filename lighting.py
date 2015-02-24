@@ -186,6 +186,7 @@ class LambertianPointLight(Ch):
     def on_changed(self, which):
         if not hasattr(self, '_lpl'):
             if getattr(self, 'double_sided', False):
+                from chumpy.ch import abs as absolute
                 self.add_dterm('_lpl', absolute(multiply(a=multiply())))
                 self._lpl.a = self._lpl.x
             else:
