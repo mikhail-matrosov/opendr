@@ -86,7 +86,7 @@ def GaussianKernel2D(ksize, sigma):
     return oneway * oneway.T
 
 
-class GaussPyrDownOne(Ch):
+class GaussPyrDownOneOld(Ch):
     terms =  'im_shape', 'want_downsampling', 'kernel'
     dterms = 'px'
     
@@ -104,9 +104,10 @@ class GaussPyrDownOne(Ch):
                 halfsampler, self._output_shape = halfsampler_for(self._output_shape)
                 self.transf_mtx = halfsampler.dot(self.transf_mtx)
             self.add_dterm('transform', MatVecMult(mtx=self.transf_mtx))
-            
+
         if 'px' in which:
-            self.transform.vec = self.px           
+            self.transform.vec = self.px
+    
     
     @property
     def output_shape(self):
@@ -114,12 +115,35 @@ class GaussPyrDownOne(Ch):
         return self._output_shape
     
     def compute_r(self):
-        return self.transf_mtx.dot(self.px.r.ravel()).reshape(self.output_shape)
+        result = self.transf_mtx.dot(self.px.r.ravel()).reshape(self.output_shape)
+        #print result.shape
+        return result
     
     def compute_dr_wrt(self, wrt):
         if wrt is self.transform:
             return 1
+        
     
+
+class GaussPyrDownOneNew(Ch):
+    terms =  'im_shape'
+    dterms = 'px'
+    
+    @property
+    def output_shape(self):
+        return self.r.shape
+    
+    def compute_r(self):
+        result = cv2.pyrDown(self.px.r)
+        return result
+    
+    def compute_dr_wrt(self, wrt):
+        if wrt is self.px:
+            linop = lambda x : cv2.pyrDown(x.reshape(self.im_shape)).ravel()
+            return sp.linalg.LinearOperator((self.r.size, self.px.size), linop)
+
+
+GaussPyrDownOne = GaussPyrDownOneOld
 
 def halfsampler_for(shape):
     h = shape[0]

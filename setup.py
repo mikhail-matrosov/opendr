@@ -9,6 +9,7 @@ from distutils.extension import Extension
 import numpy
 import platform
 import os
+from version import version
 
 try:
     from Cython.Build import cythonize
@@ -27,6 +28,11 @@ if 'setuptools.extension' in sys.modules:
 
 context_dir = os.path.join(os.path.dirname(__file__), 'contexts')
 
+osmesa_mirrors = [
+    'https://s3.amazonaws.com/bodylabs-assets/public/osmesa/',
+    'http://files.is.tue.mpg.de/mloper/opendr/osmesa/',
+]
+
 def download_osmesa():
     import os, re, zipfile
     from utils import wget
@@ -36,9 +42,13 @@ def download_osmesa():
         osmesa_fname = 'OSMesa.%s.%s.zip' % (sysinfo[0], sysinfo[-2])
         zip_fname = os.path.join(context_dir, osmesa_fname)
         if not os.path.exists(zip_fname):
-            print "Downloading %s" % osmesa_fname
-            # MPI url was: http://files.is.tue.mpg.de/mloper/opendr/osmesa/%s
-            wget('https://s3.amazonaws.com/bodylabs-assets/public/osmesa/%s' % (osmesa_fname,), dest_fname=zip_fname)
+            for base_url in osmesa_mirrors:
+                print "Downloading %s" % (base_url + osmesa_fname, )
+                try:
+                    wget(base_url + osmesa_fname, dest_fname=zip_fname)
+                    break
+                except Exception:
+                    print "File not found, trying mirrors"
         assert(os.path.exists(zip_fname))
         with zipfile.ZipFile(zip_fname, 'r') as z:
             for f in filter(lambda x: re.search('[ah]$', x), z.namelist()):
@@ -60,7 +70,7 @@ def autogen_opengl_sources():
 def setup_opendr(ext_modules):
     ext_modules=cythonize(ext_modules)
     setup(name='opendr',
-            version='0.63',
+            version=version,
             packages = ['opendr', 'opendr.contexts', 'opendr.test_dr'],
             package_dir = {'opendr': '.'},
             author = 'Matthew Loper',
@@ -68,7 +78,7 @@ def setup_opendr(ext_modules):
             url = 'http://github.com/mattloper/opendr',
             ext_package='opendr',
             package_data={'opendr': ['test_dr/nasa*']},
-            install_requires=['Cython', 'chumpy >= 0.53', 'matplotlib'],
+            install_requires=['Cython', 'chumpy >= 0.58', 'matplotlib'],
             description='opendr',
             ext_modules=ext_modules,
             license='MIT',

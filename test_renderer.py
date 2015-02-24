@@ -95,7 +95,13 @@ class TestRenderer(unittest.TestCase):
             rn_gpr = GaussPyrDownOne(im_shape=rn.shape, want_downsampling=True, px=rn)
             for r in [rn_pyr, rn_lap, rn_gpr]:
                 _ = r.r
-                #_ = r.dr_wrt(rn.v)
+            for r in [rn_pyr, rn_gpr]:
+                for ii in range(3):
+                    rn.v[:,:] = rn.v[:,:].r + 1e-10
+                    import time
+                    tm = time.time()
+                    _ = r.dr_wrt(rn)
+                    #print "trial %d: %.2fS " % (ii, time.time() - tm)
         
     def test_distortion(self):
         mesh, lightings, camera, frustum, renderers = self.load_basics()
@@ -179,9 +185,9 @@ class TestRenderer(unittest.TestCase):
         mesh, lightings, camera, frustum, renderers = self.load_basics()
 
         camparms = {
-            'c': {'mednz' : 2.2e-2, 'meannz': 4.1e-2, 'desc': 'center of proj diff', 'eps0': 4., 'eps1': .1},
+            'c': {'mednz' : 2.2e-2, 'meannz': 4.2e-2, 'desc': 'center of proj diff', 'eps0': 4., 'eps1': .1},
             #'f': {'mednz' : 2.5e-2, 'meannz': 6e-2, 'desc': 'focal diff', 'eps0': 100., 'eps1': .1},
-            't': {'mednz' : 1.2e-1, 'meannz': 2.8e-1, 'desc': 'trans diff', 'eps0': .25, 'eps1': .1},
+            't': {'mednz' : 1.2e-1, 'meannz': 3.0e-1, 'desc': 'trans diff', 'eps0': .25, 'eps1': .1},
             'rt': {'mednz' : 8e-2, 'meannz': 1.8e-1, 'desc': 'rot diff', 'eps0': 0.02, 'eps1': .5},
             'k': {'mednz' : 7e-2, 'meannz': 5.1e-1, 'desc': 'distortion diff', 'eps0': .5, 'eps1': .05}
         }
