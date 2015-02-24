@@ -180,12 +180,16 @@ def lambertian_spotlight(v, vn, pos, dir, spot_exponent, camcoord=False, camera_
 
 
 class LambertianPointLight(Ch):
-    terms = 'f', 'num_verts', 'light_color'
+    terms = 'f', 'num_verts', 'light_color', 'double_sided'
     dterms = 'light_pos', 'v', 'vc', 'vn'
     
     def on_changed(self, which):
         if not hasattr(self, '_lpl'):
-            self.add_dterm('_lpl', maximum(multiply(a=multiply()), 0.0))
+            if getattr(self, 'double_sided', False):
+                self.add_dterm('_lpl', absolute(multiply(a=multiply())))
+                self._lpl.a = self._lpl.x
+            else:
+                self.add_dterm('_lpl', maximum(multiply(a=multiply()), 0.0))
         if not hasattr(self, 'ldn'):
             self.ldn = LightDotNormal(self.v.r.size/3)            
         if not hasattr(self, 'vn'):
