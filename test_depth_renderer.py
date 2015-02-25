@@ -137,4 +137,4 @@ if __name__ == '__main__':
     #unittest.main()
     suite = unittest.TestLoader().loadTestsFromTestCase(TestDepthRenderer)
     unittest.TextTestRunner(verbosity=2).run(suite)
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()

@@ -425,10 +425,7 @@ class TestRenderer(unittest.TestCase):
             # print '-------------------------------------------'
             #lighting.set(vc=mesh_colors, v=mesh_verts)
 
-            try:
-                lighting.vc = mesh_colors[:,:renderer.num_channels]
-            except:
-                import pdb; pdb.set_trace()
+            lighting.vc = mesh_colors[:,:renderer.num_channels]
             lighting.v = mesh_verts
 
             renderer.set(v=mesh_verts, vc=lighting)
@@ -454,10 +451,7 @@ class TestRenderer(unittest.TestCase):
 
             dr_empirical = (np.asarray(rfwd, np.float64) - np.asarray(rbwd, np.float64)).ravel() / eps
 
-            try:
-                dr_predicted = dr.dot(col(direction.flatten())).reshape(dr_empirical.shape)
-            except:
-                import pdb; pdb.set_trace()
+            dr_predicted = dr.dot(col(direction.flatten())).reshape(dr_empirical.shape)
 
             images = OrderedDict()
             images['shifted colors'] = np.asarray(rfwd, np.float64)-.5
@@ -499,5 +493,5 @@ if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestRenderer)
     unittest.TextTestRunner(verbosity=2).run(suite)
     plt.show()
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 

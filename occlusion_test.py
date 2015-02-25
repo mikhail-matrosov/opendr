@@ -137,4 +137,4 @@ if __name__ == '__main__':
     visualize = True
     suite = unittest.TestLoader().loadTestsFromTestCase(TestOcclusion)
     unittest.TextTestRunner(verbosity=2).run(suite)
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()

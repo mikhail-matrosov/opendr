@@ -90,4 +90,4 @@ if __name__ == '__main__':
     r2 -= np.min(r2.ravel())
     r2 /= np.max(r2.ravel())
     plt.imshow(r2)
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()

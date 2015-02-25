@@ -107,7 +107,7 @@ def dImage_wrt_2dVerts_bnd(observed, visible, visibility, barycentric, image_wid
         plt.subplot(122)
         plt.imshow(xdiffbnd)
         plt.title('xdiffbnd')
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
 
     idxs = np.isnan(xdiffnb.ravel())
     xdiffnb.ravel()[idxs] = xdiffbnd.ravel()[idxs]

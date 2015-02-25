@@ -153,5 +153,5 @@ if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestSphericalHarmonics)
     unittest.TextTestRunner(verbosity=2).run(suite)
     plt.show()
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 

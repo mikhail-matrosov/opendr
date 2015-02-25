@@ -73,7 +73,7 @@ def main():
 
     im = gl.getImage()
     cv2.imshow('a', im)
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
 
 

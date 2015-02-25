@@ -138,7 +138,7 @@ def main():
     im = gl.getImage()
     cv2.imshow('a', im)
     print gl.GetError()
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
 
 
