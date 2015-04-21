@@ -82,7 +82,7 @@ class ProjectPoints(Ch):
         #return self.get_r_and_derivatives(self.v.r, self.rt.r, self.t.r, self.f.r, self.c.r, self.k.r)[0].squeeze()
         # method self.r_and_derivatives will compute derivatives as well
         #see http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
-        v_t = self.v.r
+        v_t = self.v.r.reshape((-1,3)).copy()
         if np.any(self.rt.r != 0.):
             v_t = (v_t).dot(cv2.Rodrigues(self.rt.r)[0].T)
         if np.any(self.t.r != 0.):
@@ -91,15 +91,25 @@ class ProjectPoints(Ch):
         x_y = v_t[:,:2] / v_t[:,[2]]
         uv = x_y
         if np.any(self.k.r != 0.):
-            k1, k2, p1, p2, k3 = self.k.r
+            k = self.k.r
+            # According to this link: http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
+            # k can have three lengths: (k_1, k_2, p_1, p_2[, k_3[, k_4, k_5, k_6]]) 
+            if len(k) == 4:
+                k1, k2, p1, p2 = k
+            elif len(k) == 5:
+                k1, k2, p1, p2, k3 = k
+            elif len(k) == 8:
+                k1, k2, p1, p2, k3, k4, k5, k6 = k
+            else:
+                raise AttributeError('k has wrong length, got %d, expect 4, 5 or 8' % len(k))
             x2_y2 = x_y ** 2.
             r2 = x2_y2.sum(axis=1)
             r4 = r2 ** 2.
             xy = x_y.prod(axis=1)
             uv = x_y * (1 + k1 * r2 + k2 * r4 + k3 * r2 * r4)[:,np.newaxis]
-            uv += 2*np.vstack([p1 * xy, p2 * xy]).T
+            uv += 2 * np.vstack([p1 * xy, p2 * xy]).T
             uv += np.array([p2, p1]) * (r2[:,np.newaxis] + 2 * x2_y2)
-        uv = self.f.r*uv + self.c.r
+        uv = self.f.r * uv + self.c.r
         return uv
 
     def compute_dr_wrt(self, wrt):
