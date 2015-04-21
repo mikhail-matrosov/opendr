@@ -31,8 +31,20 @@ class TestCamera(unittest.TestCase):
         cam_params = {'v': ch.Ch(v_raw), 'rt': rt, 't': t, 'f': f, 'c': c, 'k': k}
         return cam_params
     
+    def test_project_points_without_derivatives(self):
+        from util_tests import get_earthmesh
+        cam_params = self.get_cam_params()
+        mesh = get_earthmesh(trans=np.array([0,0,5]), rotation = np.array([0,0,0]))
+        
+        pp = ProjectPoints(f=cam_params['f'], rt=cam_params['rt'], t=cam_params['t'], k=cam_params['k'], c=cam_params['c'])
+        pp.v = mesh.v
+
+        np.testing.assert_array_equal(pp.r, pp.r_and_derivatives[0].squeeze())
+    
     def test_project_points(self):
         self.project_points(ProjectPoints)
+
+    def test_project_points_3d(self):
         self.project_points(ProjectPoints3D)
         
     def project_points(self, cls):
