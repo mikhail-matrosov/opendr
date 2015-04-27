@@ -110,7 +110,7 @@ class ProjectPoints(Ch):
             uv += 2 * np.vstack([p1 * xy, p2 * xy]).T
             uv += np.array([p2, p1]) * (r2[:,np.newaxis] + 2 * x2_y2)
         uv = self.f.r * uv + self.c.r
-        return uv
+        return uv.squeeze()
 
     def compute_dr_wrt(self, wrt):
         if wrt not in [self.v, self.rt, self.t, self.f, self.c, self.k]:
