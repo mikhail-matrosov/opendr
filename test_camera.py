@@ -39,7 +39,7 @@ class TestCamera(unittest.TestCase):
         pp = ProjectPoints(f=cam_params['f'], rt=cam_params['rt'], t=cam_params['t'], k=cam_params['k'], c=cam_params['c'])
         pp.v = mesh.v
 
-        np.testing.assert_array_equal(pp.r, pp.r_and_derivatives[0].squeeze())
+        np.testing.assert_array_almost_equal(pp.r, pp.r_and_derivatives[0].squeeze())
     
     def test_project_points(self):
         self.project_points(ProjectPoints)
