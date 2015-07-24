@@ -139,7 +139,7 @@ class ProjectPoints(Ch):
         cam = ProjectPoints3D(**{k: getattr(self, k)  for k in self.dterms if hasattr(self, k)})
 
         try:
-            xy_undistorted_camspace = cv2.undistortPoints(np.asarray(uvd[:,:2].reshape((1,-1,2)).copy()), np.asarray(cam.camera_mtx), cam.k.r)
+            xy_undistorted_camspace = cv2.undistortPoints(np.asarray(uvd[:,:2].reshape((1,-1,2))), np.asarray(cam.camera_mtx), cam.k.r)
             xyz_camera_space = np.hstack((xy_undistorted_camspace.squeeze(), col(uvd[:,2])))
             xyz_camera_space[:,:2] *= col(xyz_camera_space[:,2]) # scale x,y by z
             if camera_space:
