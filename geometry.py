@@ -245,18 +245,14 @@ class VertNormals(Ch):
     """If normalized==True, normals are normalized; otherwise they'll be about as long as neighboring edges."""
     
     dterms = 'v'
-    terms = 'f' 'normalized'
-    term_order = 'v', 'f'
+    terms = 'f', 'normalized'
+    term_order = 'v', 'f', 'normalized'
 
     def on_changed(self, which):
 
         if not hasattr(self, 'normalized'):
             self.normalized = True
             
-        for w in which:
-            if w not in ('v', 'f'):
-                raise Exception('VertNormals has only v and f now, and you specified %s.' % (w))
-
         if hasattr(self, 'v') and hasattr(self, 'f'):
             if 'f' not in which and hasattr(self, 'faces_by_vertex') and self.faces_by_vertex.shape[0]/3 == self.v.shape[0]:
                 self.tns.v = self.v
