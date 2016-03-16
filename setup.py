@@ -43,7 +43,7 @@ def download_osmesa(retry_on_bad_zip=True):
             except Exception:
                 print "File not found, trying mirrors"
 
-    mesa_dir = os.path.join(context_dir,'OSMesa')
+    mesa_dir = os.path.join(context_dir, 'OSMesa')
     if not os.path.exists(mesa_dir):
         sysinfo = platform.uname()
         osmesa_fname = 'OSMesa.%s.%s.zip' % (sysinfo[0], sysinfo[-2])
@@ -65,7 +65,7 @@ def download_osmesa(retry_on_bad_zip=True):
 
 def autogen_opengl_sources():
     import os
-    sources = [ os.path.join(context_dir, x) for x in ['_constants.py', '_functions.pyx'] ]
+    sources = [ os.path.join(context_dir, x) for x in ['_constants.py', '_functions.pyx']]
     if not all([ os.path.exists(x) for x in sources ]):
         print "Autogenerating opengl sources"
         from contexts import autogen
