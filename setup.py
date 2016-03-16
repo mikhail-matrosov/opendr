@@ -25,26 +25,41 @@ osmesa_mirrors = [
     'http://files.is.tue.mpg.de/mloper/opendr/osmesa/',
 ]
 
-def download_osmesa():
-    import os, re, zipfile
-    from utils import wget
+def download_osmesa(retry_on_bad_zip=True):
+    from zipfile import BadZipfile
+    def unzip(fname):
+        import zipfile, re
+        with zipfile.ZipFile(fname, 'r') as z:
+            for f in filter(lambda x: re.search('[ah]$', x), z.namelist()):
+                z.extract(f, path=context_dir)
+
+    def download_zip(dest_fname):
+        from utils import wget
+        for base_url in osmesa_mirrors:
+            print "Downloading %s" % (base_url + osmesa_fname, )
+            try:
+                wget(base_url + osmesa_fname, dest_fname=dest_fname)
+                break
+            except Exception:
+                print "File not found, trying mirrors"
+
     mesa_dir = os.path.join(context_dir,'OSMesa')
     if not os.path.exists(mesa_dir):
         sysinfo = platform.uname()
         osmesa_fname = 'OSMesa.%s.%s.zip' % (sysinfo[0], sysinfo[-2])
         zip_fname = os.path.join(context_dir, osmesa_fname)
         if not os.path.exists(zip_fname):
-            for base_url in osmesa_mirrors:
-                print "Downloading %s" % (base_url + osmesa_fname, )
-                try:
-                    wget(base_url + osmesa_fname, dest_fname=zip_fname)
-                    break
-                except Exception:
-                    print "File not found, trying mirrors"
+            download_zip(zip_fname)
         assert(os.path.exists(zip_fname))
-        with zipfile.ZipFile(zip_fname, 'r') as z:
-            for f in filter(lambda x: re.search('[ah]$', x), z.namelist()):
-                z.extract(f, path=context_dir)
+        try:
+            unzip(zip_fname)
+        except BadZipfile:
+            if retry_on_bad_zip:
+                print "Bad zip file; retrying download."
+                download_osmesa(retry_on_bad_zip=False)
+            else:
+                print "Bad zip file; not retrying download again."
+                raise
         assert(os.path.exists(mesa_dir))
 
 
