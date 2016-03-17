@@ -24,12 +24,13 @@ def wget(url, dest_fname=None):
         dest_fname = join(curdir, split(url)[1])
 
     try:
-        with urllib2.urlopen(url) as source:
-            with open(dest_fname, 'w') as f:
-                while True:
-                    contents = source.read(8000)
-                    if contents == "":
-                        break
-                    f.write(contents)
+        source = urllib2.urlopen(url)
+        with open(dest_fname, 'w') as f:
+            while True:
+                contents = source.read(8000)
+                if contents == "":
+                    break
+                f.write(contents)
+        source.close()
     except:
         raise Exception('Unable to get url: %s' % (url,))
