@@ -24,33 +24,50 @@ osmesa_mirrors = [
     'https://s3.amazonaws.com/bodylabs-assets/public/osmesa/',
     'http://files.is.tue.mpg.de/mloper/opendr/osmesa/',
 ]
+# Filenames on the above mirrors follow this convention:
+sysinfo = platform.uname()
+osmesa_fname = 'OSMesa.%s.%s.zip' % (sysinfo[0], sysinfo[-2])
 
-def download_osmesa():
-    import os, re, zipfile
-    from utils import wget
-    mesa_dir = os.path.join(context_dir,'OSMesa')
+def download_osmesa(retries_on_bad_zip=1):
+    from zipfile import BadZipfile
+    def unzip(fname, dest_dir):
+        import zipfile, re
+        with zipfile.ZipFile(fname, 'r') as z:
+            for f in filter(lambda x: re.search('[ah]$', x), z.namelist()):
+                z.extract(f, path=dest_dir)
+
+    def download_zip(dest_fname):
+        from utils import wget
+        for base_url in osmesa_mirrors:
+            print "Downloading %s" % (base_url + osmesa_fname, )
+            try:
+                wget(base_url + osmesa_fname, dest_fname=dest_fname)
+                break
+            except Exception:
+                print "File not found, trying mirrors"
+
+    mesa_dir = os.path.join(context_dir, 'OSMesa')
     if not os.path.exists(mesa_dir):
-        sysinfo = platform.uname()
-        osmesa_fname = 'OSMesa.%s.%s.zip' % (sysinfo[0], sysinfo[-2])
         zip_fname = os.path.join(context_dir, osmesa_fname)
         if not os.path.exists(zip_fname):
-            for base_url in osmesa_mirrors:
-                print "Downloading %s" % (base_url + osmesa_fname, )
-                try:
-                    wget(base_url + osmesa_fname, dest_fname=zip_fname)
-                    break
-                except Exception:
-                    print "File not found, trying mirrors"
+            download_zip(zip_fname)
         assert(os.path.exists(zip_fname))
-        with zipfile.ZipFile(zip_fname, 'r') as z:
-            for f in filter(lambda x: re.search('[ah]$', x), z.namelist()):
-                z.extract(f, path=context_dir)
+        try:
+            unzip(zip_fname, context_dir)
+        except BadZipfile:
+            if retries_on_bad_zip > 0:
+                print "Bad zip file; retrying download."
+                os.remove(zip_fname)
+                download_osmesa(retries_on_bad_zip=retries_on_bad_zip - 1)
+            else:
+                print "Bad zip file; not retrying download again."
+                raise
         assert(os.path.exists(mesa_dir))
 
 
 def autogen_opengl_sources():
     import os
-    sources = [ os.path.join(context_dir, x) for x in ['_constants.py', '_functions.pyx'] ]
+    sources = [ os.path.join(context_dir, x) for x in ['_constants.py', '_functions.pyx']]
     if not all([ os.path.exists(x) for x in sources ]):
         print "Autogenerating opengl sources"
         from contexts import autogen

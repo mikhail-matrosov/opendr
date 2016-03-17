@@ -31,5 +31,6 @@ def wget(url, dest_fname=None):
                 if contents == "":
                     break
                 f.write(contents)
+        source.close()
     except:
         raise Exception('Unable to get url: %s' % (url,))
