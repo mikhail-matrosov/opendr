@@ -24,14 +24,17 @@ osmesa_mirrors = [
     'https://s3.amazonaws.com/bodylabs-assets/public/osmesa/',
     'http://files.is.tue.mpg.de/mloper/opendr/osmesa/',
 ]
+# Filenames on the above mirrors follow this convention:
+sysinfo = platform.uname()
+osmesa_fname = 'OSMesa.%s.%s.zip' % (sysinfo[0], sysinfo[-2])
 
-def download_osmesa(retry_on_bad_zip=True):
+def download_osmesa(retries_on_bad_zip=1):
     from zipfile import BadZipfile
-    def unzip(fname):
+    def unzip(fname, dest_dir):
         import zipfile, re
         with zipfile.ZipFile(fname, 'r') as z:
             for f in filter(lambda x: re.search('[ah]$', x), z.namelist()):
-                z.extract(f, path=context_dir)
+                z.extract(f, path=dest_dir)
 
     def download_zip(dest_fname):
         from utils import wget
@@ -45,18 +48,17 @@ def download_osmesa(retry_on_bad_zip=True):
 
     mesa_dir = os.path.join(context_dir, 'OSMesa')
     if not os.path.exists(mesa_dir):
-        sysinfo = platform.uname()
-        osmesa_fname = 'OSMesa.%s.%s.zip' % (sysinfo[0], sysinfo[-2])
         zip_fname = os.path.join(context_dir, osmesa_fname)
         if not os.path.exists(zip_fname):
             download_zip(zip_fname)
         assert(os.path.exists(zip_fname))
         try:
-            unzip(zip_fname)
+            unzip(zip_fname, context_dir)
         except BadZipfile:
-            if retry_on_bad_zip:
+            if retries_on_bad_zip > 0:
                 print "Bad zip file; retrying download."
-                download_osmesa(retry_on_bad_zip=False)
+                os.remove(zip_fname)
+                download_osmesa(retries_on_bad_zip=retries_on_bad_zip - 1)
             else:
                 print "Bad zip file; not retrying download again."
                 raise
