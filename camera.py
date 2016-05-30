@@ -63,6 +63,15 @@ class RigidTransform(Ch):
 
 
 class ProjectPoints(Ch):
+    # v: The verts.
+    # rt: The extrinsic rotation.
+    # t: The extrinsic translation.
+    # f: focal length in width and height: np array of length 2
+    # c: central point / principal point (2x1 or 1x2)
+    #     It's an explicit point in the image. 0, 0 is one of the corners.
+    # In OpenGL, the origin of the screen is in the lower-left corner and pixel centres are @ half-integer coordinates.
+    # In opendr, the origin of the screen is ___ and the pixel center is at half-integer coordinates.
+    # k: Non-linear distortion parameters: arrays of length 4, 5, or 8.
     dterms = 'v', 'rt', 't', 'f', 'c', 'k'
 
     def is_valid(self):
