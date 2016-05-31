@@ -10,6 +10,7 @@ import numpy
 import platform
 import os
 from version import version
+from pip.req import parse_requirements
 
 try:
     from Cython.Build import cythonize
@@ -27,6 +28,9 @@ osmesa_mirrors = [
 # Filenames on the above mirrors follow this convention:
 sysinfo = platform.uname()
 osmesa_fname = 'OSMesa.%s.%s.zip' % (sysinfo[0], sysinfo[-2])
+
+install_requires = parse_requirements('requirements.txt', session=False)
+install_requires = [str(ir.req) for ir in install_requires]
 
 def download_osmesa(retries_on_bad_zip=1):
     from zipfile import BadZipfile
@@ -91,7 +95,7 @@ def setup_opendr(ext_modules):
             url = 'http://github.com/mattloper/opendr',
             ext_package='opendr',
             package_data={'opendr': ['test_dr/nasa*']},
-            install_requires=['Cython', 'chumpy >= 0.58', 'matplotlib'],
+            install_requires=install_requires,
             description='opendr',
             ext_modules=ext_modules,
             license='MIT',
@@ -106,7 +110,7 @@ def setup_opendr(ext_modules):
 
                 # Indicate who your project is intended for
                 'Intended Audience :: Science/Research',
-                'Topic :: Multimedia :: Graphics :: 3D Rendering',                
+                'Topic :: Multimedia :: Graphics :: 3D Rendering',
 
                 # Pick your license as you wish (should match "license" above)
                 'License :: OSI Approved :: MIT License',
@@ -115,11 +119,11 @@ def setup_opendr(ext_modules):
                 # that you indicate whether you support Python 2, Python 3 or both.
                 'Programming Language :: Python :: 2',
                 'Programming Language :: Python :: 2.7',
-                
+
                 'Operating System :: MacOS :: MacOS X',
                 'Operating System :: POSIX :: Linux'
             ],
-            
+
           )
 
 

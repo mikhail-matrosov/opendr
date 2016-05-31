@@ -12,8 +12,6 @@ dependencies:
     - sudo apt-get update
     # Is gfortran needed? This was copied from `.travis.yml` which included it.
     - sudo apt-get install -qq python-dev gfortran pkg-config liblapack-dev
-    - pip install cython
-    - 'pip install git+ssh://github.com/bodylabs/chumpy.git@master#egg=chumpy'
     - make all
 
 test:

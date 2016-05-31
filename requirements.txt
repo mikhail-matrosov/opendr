@@ -1,2 +1,4 @@
-
--e .
+cython==0.24
+numpy==1.10.1
+matplotlib==1.5.0
+git+ssh://git@github.com/bodylabs/chumpy.git@0.65.5#egg=chumpy
