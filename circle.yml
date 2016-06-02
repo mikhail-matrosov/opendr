@@ -12,6 +12,7 @@ dependencies:
     - sudo apt-get update
     # Is gfortran needed? This was copied from `.travis.yml` which included it.
     - sudo apt-get install -qq python-dev gfortran pkg-config liblapack-dev
+  post:
     - make all
 
 test:
