@@ -709,7 +709,7 @@ def draw_boundaryid_image(gl, v, f, vpe, fpe, camera, x0=None, x1=None, y0=None,
 
         if len(lines_e)==0:
             return np.ones((gl.height, gl.width)).astype(np.int32) * 4294967295
-        visibility = 	draw_edge_visibility(gl, lines_v, lines_e, f, hidden_wireframe=True)
+        visibility = draw_edge_visibility(gl, lines_v, lines_e, f, hidden_wireframe=True)
 
         # Crop
         if x0 != None and isinstance(x0, int):

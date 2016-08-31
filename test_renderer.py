@@ -450,7 +450,6 @@ class TestRenderer(unittest.TestCase):
             rbwd = renderer.r
 
             dr_empirical = (np.asarray(rfwd, np.float64) - np.asarray(rbwd, np.float64)).ravel() / eps
-
             dr_predicted = dr.dot(col(direction.flatten())).reshape(dr_empirical.shape)
 
             images = OrderedDict()
