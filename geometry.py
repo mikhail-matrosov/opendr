@@ -177,7 +177,7 @@ def SecondFundamentalForm(v, f):
     from chumpy.linalg import Pinv
     nbrs = MatVecMult(FirstEdgesMtx(v, f, want_big=True), v.ravel()).reshape((-1,3))
     
-    b0 = VertNormals(f=f, v=v)
+    b0 = NormalizedNx3(VertNormalsScaled(f=f, v=v)).reshape((-1,3))
     b1 = NormalizedNx3(CrossProduct(b0, nbrs-v)).reshape((-1,3))
     b2 = NormalizedNx3(CrossProduct(b0, b1)).reshape((-1,3))
     
