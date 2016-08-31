@@ -685,7 +685,7 @@ def compute_vpe_boundary_idxs(v, f, camera, fpe):
     campos = -cv2.Rodrigues(camera.rt.r)[0].T.dot(camera.t.r)
     rays_to_verts = v.reshape((-1,3)) - row(campos)
     rays_to_faces = rays_to_verts[f[:,0]] + rays_to_verts[f[:,1]] + rays_to_verts[f[:,2]]
-    faces_invisible = np.sum(rays_to_faces * tn, axis=1)
+    faces_invisible = (rays_to_faces * tn).sum(axis=1)
     dps = faces_invisible[fpe[:,0]] * faces_invisible[fpe[:,1]]
     silhouette_edges = np.asarray(np.nonzero(dps<=0)[0], np.uint32)
     return silhouette_edges, faces_invisible < 0
@@ -709,7 +709,7 @@ def draw_boundaryid_image(gl, v, f, vpe, fpe, camera, x0=None, x1=None, y0=None,
 
         if len(lines_e)==0:
             return np.ones((gl.height, gl.width)).astype(np.int32) * 4294967295
-        visibility = draw_edge_visibility(gl, lines_v, lines_e, f, hidden_wireframe=True)
+        visibility = 	draw_edge_visibility(gl, lines_v, lines_e, f, hidden_wireframe=True)
 
         # Crop
         if x0 != None and isinstance(x0, int):
